@@ -79,7 +79,9 @@ class SensorpushMonitor
       sensors_response = RestClient.post(SENSORPUSH_API + '/devices/sensors', {  }, headers=default_headers)
     rescue => e
       @logger.error(e)
-      return {}
+      generic_response = {}
+      generic_response.default = {}
+      return generic_response
     end
     JSON.parse(sensors_response.body)
   end
