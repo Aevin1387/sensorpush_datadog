@@ -29,13 +29,13 @@ class SensorpushMonitor
   SENSORPUSH_AUTHORIZE_URL = 'https://api.sensorpush.com/api/v1/oauth/authorize'
   SENSORPUSH_ACCESS_TOKEN_URL = 'https://api.sensorpush.com/api/v1/oauth/accesstoken'
   SENSORPUSH_API = 'https://api.sensorpush.com/api/v1'
-  def initialize(dd_api_key, dd_app_key, sp_username, sp_password)
+  def initialize(dd_api_key, dd_app_key, sp_username, sp_password, logger)
     @datadog_client = Dogapi::Client.new(dd_api_key, dd_app_key)
     @sp_username = sp_username
     @sp_password = sp_password
     @access_token = access_token
     @sensors = sensors
-    @logger = Logger.new(STDOUT)
+    @logger = logger
   end
 
   def reports
@@ -132,12 +132,14 @@ class SensorpushMonitor
   end
 end
 
-sp = SensorpushMonitor.new ENV['DD_API_KEY'], ENV['DD_APP_KEY'], ENV['SENSORPUSH_EMAIL'], ENV['SENSORPUSH_PASSWORD']
+logger = Logger.new(STDOUT)
+sp = SensorpushMonitor.new ENV['DD_API_KEY'], ENV['DD_APP_KEY'], ENV['SENSORPUSH_EMAIL'], ENV['SENSORPUSH_PASSWORD'], logger
+
 loop do
   begin
     sp.process_latest_samples
   rescue => e
-    @logger.error(e)
+    logger.error(e)
   end
   sleep 60
 end
