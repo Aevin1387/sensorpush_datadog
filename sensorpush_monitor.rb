@@ -69,7 +69,9 @@ class SensorpushMonitor
       sample_response = RestClient.post(SENSORPUSH_API + '/samples', { "startTime" => start_str, "endTime" => end_str, 'bulk' => bulk }, headers=default_headers)
     rescue => e
       @logger.error(e)
-      return []
+      generic_response = {}
+      generic_response.default = {}
+      return generic_response
     end
     JSON.parse(sample_response.body)
   end
