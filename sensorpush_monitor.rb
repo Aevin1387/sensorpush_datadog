@@ -42,7 +42,8 @@ class SensorpushMonitor
     begin
       list_response = RestClient.post(SENSORPUSH_API + '/reports/list', {}, headers=default_headers)
     rescue => e
-      @logger.fatal(e)
+      @logger.error(e)
+      return []
     end
     JSON.parse(list_response.body)['files']
   end
@@ -58,7 +59,8 @@ class SensorpushMonitor
     begin
       download_response = RestClient.post(SENSORPUSH_API + '/reports/download', {path:name}, headers=default_headers)
     rescue => e
-      @logger.fatal(e)
+      @logger.error(e)
+      nil
     end
   end
 
@@ -66,7 +68,8 @@ class SensorpushMonitor
     begin
       sample_response = RestClient.post(SENSORPUSH_API + '/samples', { "startTime" => start_str, "endTime" => end_str, 'bulk' => bulk }, headers=default_headers)
     rescue => e
-      @logger.fatal(e)
+      @logger.error(e)
+      return []
     end
     JSON.parse(sample_response.body)
   end
@@ -75,7 +78,8 @@ class SensorpushMonitor
     begin
       sensors_response = RestClient.post(SENSORPUSH_API + '/devices/sensors', {  }, headers=default_headers)
     rescue => e
-      @logger.fatal(e)
+      @logger.error(e)
+      return {}
     end
     JSON.parse(sensors_response.body)
   end
@@ -90,6 +94,7 @@ class SensorpushMonitor
   def process_sensor_samples(sensor_samples, sensor_id)
     humidity_points, temperature_points = process_samples(sensor_samples, sensor_id)
     sensor = @sensors[sensor_id]
+    return if sensor.nil?
     tags = ["sensor_id:#{sensor_id}", "sensor_name:#{sensor['name']}"]
     puts "Emitting sensorpush.relative_humidity: #{humidity_points}, sensor_id: #{sensor_id} sensor_name: #{sensor['name']}" if humidity_points.any?
     @datadog_client.emit_points('sensorpush.relative_humidity', humidity_points, tags: tags) if humidity_points.any?
@@ -129,6 +134,10 @@ end
 
 sp = SensorpushMonitor.new ENV['DD_API_KEY'], ENV['DD_APP_KEY'], ENV['SENSORPUSH_EMAIL'], ENV['SENSORPUSH_PASSWORD']
 loop do
-  sp.process_latest_samples
+  begin
+    sp.process_latest_samples
+  rescue => e
+    @logger.error(e)
+  end
   sleep 60
 end
