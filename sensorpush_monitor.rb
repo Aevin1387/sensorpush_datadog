@@ -33,9 +33,9 @@ class SensorpushMonitor
     @datadog_client = Dogapi::Client.new(dd_api_key, dd_app_key)
     @sp_username = sp_username
     @sp_password = sp_password
-    @access_token = access_token
     @sensors = sensors
     @logger = logger
+    login
   end
 
   def reports
@@ -120,6 +120,10 @@ class SensorpushMonitor
     [humidity_points, temperature_points]
   end
 
+  def login
+    @access_token = access_token
+  end
+
   private
 
   def default_headers
@@ -138,12 +142,17 @@ end
 
 logger = Logger.new(STDOUT)
 sp = SensorpushMonitor.new ENV['DD_API_KEY'], ENV['DD_APP_KEY'], ENV['SENSORPUSH_EMAIL'], ENV['SENSORPUSH_PASSWORD'], logger
-
+count = 0
 loop do
   begin
     sp.process_latest_samples
   rescue => e
     logger.error(e)
+  end
+  count = count + 1
+  if count == 15
+    sp.login
+    count = 0
   end
   sleep 60
 end
