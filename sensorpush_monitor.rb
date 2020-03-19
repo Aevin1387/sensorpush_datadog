@@ -30,12 +30,12 @@ class SensorpushMonitor
   SENSORPUSH_ACCESS_TOKEN_URL = 'https://api.sensorpush.com/api/v1/oauth/accesstoken'
   SENSORPUSH_API = 'https://api.sensorpush.com/api/v1'
   def initialize(dd_api_key, dd_app_key, sp_username, sp_password, logger)
+    @logger = logger
     @datadog_client = Dogapi::Client.new(dd_api_key, dd_app_key)
     @sp_username = sp_username
     @sp_password = sp_password
-    @sensors = sensors
-    @logger = logger
     login
+    @sensors = sensors
   end
 
   def reports
